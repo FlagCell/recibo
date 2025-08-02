@@ -81,6 +81,9 @@
   <label>Nome de quem recebeu:</label>
   <input type="text" id="recebedor">
 
+  <label>CPF de quem recebeu (opcional):</label>
+  <input type="text" id="cpfRecebedor" placeholder="Somente números">
+
   <div class="assinatura">
     <p>__________________________________________</p>
     <p>(Assinatura de quem recebeu)</p>
@@ -198,6 +201,7 @@
       const cidade = document.getElementById('cidade').value;
       const data = formatarDataBR(document.getElementById('data').value);
       const assinatura = document.getElementById('recebedor').value;
+      const cpfRecebedor = document.getElementById('cpfRecebedor').value;
 
       const docValido = tipo === 'cpf' ? validarCPF(docNum) : validarCNPJ(docNum);
       if (!docValido) {
@@ -225,6 +229,10 @@
         doc.text("__________________________________________", 105, y, { align: "center" });
         y += 6;
         doc.text(assinatura || "Assinatura de quem recebeu", 105, y, { align: "center" });
+        if (cpfRecebedor) {
+          y += 6;
+          doc.text(`CPF de quem recebeu: ${cpfRecebedor}`, 105, y, { align: "center" });
+        }
       }
 
       recibo(0);
@@ -232,7 +240,7 @@
       doc.setLineWidth(0.1);
       doc.setDrawColor(120);
       doc.setLineDashPattern([2, 2], 0);
-      doc.line(10, 145, 200, 145); // linha de corte ajustada
+      doc.line(10, 145, 200, 145); // linha de corte
 
       recibo(155);
 
