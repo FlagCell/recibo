@@ -1,0 +1,82 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <title>Recibo Simples</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      max-width: 700px;
+      margin: 30px auto;
+      padding: 20px;
+      border: 1px solid #000;
+    }
+    h2 {
+      text-align: center;
+    }
+    label {
+      font-weight: bold;
+      display: block;
+      margin-top: 10px;
+    }
+    input, textarea {
+      width: 100%;
+      padding: 8px;
+      margin-top: 5px;
+      box-sizing: border-box;
+      font-size: 14px;
+    }
+    .assinatura {
+      margin-top: 40px;
+      text-align: center;
+    }
+    button {
+      margin-top: 30px;
+      padding: 10px 20px;
+      font-size: 16px;
+      cursor: pointer;
+      display: block;
+      width: 100%;
+    }
+    @media print {
+      button { display: none; }
+      input, textarea {
+        border: none;
+        background: transparent;
+        resize: none;
+      }
+    }
+  </style>
+</head>
+<body>
+  <h2>RECIBO</h2>
+
+  <label>Nome de quem pagou:</label>
+  <input type="text" placeholder="Nome completo">
+
+  <label>CPF/CNPJ de quem pagou:</label>
+  <input type="text" placeholder="000.000.000-00">
+
+  <label>Valor (R$):</label>
+  <input type="text" placeholder="Ex: 500,00">
+
+  <label>Valor por extenso:</label>
+  <input type="text" placeholder="Ex: quinhentos reais">
+
+  <label>Referente a:</label>
+  <textarea rows="3" placeholder="Descreva o serviço ou produto pago"></textarea>
+
+  <label>Forma de pagamento:</label>
+  <input type="text" placeholder="Dinheiro, Pix, transferência...">
+
+  <label>Data:</label>
+  <input type="date">
+
+  <div class="assinatura">
+    <p>__________________________________________</p>
+    <p>Assinatura de quem recebeu</p>
+  </div>
+
+  <button onclick="window.print()">Salvar / Imprimir em PDF</button>
+</body>
+</html>
