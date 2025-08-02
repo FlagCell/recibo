@@ -111,11 +111,12 @@
         }
 
         if (n >= 100) {
-          if (n === 100) {
+          const c = Math.floor(n / 100);
+          if (c === 1 && n % 100 === 0) {
             s += 'cem';
             n = 0;
           } else {
-            s += centenas[Math.floor(n / 100)];
+            s += centenas[c + 1];
             n %= 100;
             if (n > 0) s += ' e ';
           }
@@ -139,8 +140,8 @@
 
       const inteiro = Math.floor(valor);
       const centavos = Math.round((valor - inteiro) * 100);
-      let texto = extenso(inteiro) + ' real' + (inteiro !== 1 ? 's' : '');
 
+      let texto = extenso(inteiro) + ' real' + (inteiro !== 1 ? 's' : '');
       if (centavos > 0) {
         texto += ' e ' + extenso(centavos) + ' centavo' + (centavos !== 1 ? 's' : '');
       }
@@ -184,16 +185,4 @@
         y += 7;
         doc.text(`Data: ${data}`, 10, y);
         y += 20;
-        doc.text("__________________________________________", 105, y, { align: "center" });
-        y += 6;
-        doc.text("Assinatura de quem recebeu", 105, y, { align: "center" });
-      }
-
-      gerarTexto();        // Primeira via
-      gerarTexto(120);     // Segunda via
-
-      doc.save("recibo.pdf");
-    }
-  </script>
-</body>
-</html>
+        doc.text("__________________________________________", 105, y,
