@@ -2,102 +2,406 @@
 <html lang="pt-BR">
 <head>
   <meta charset="UTF-8">
-  <title>Recibo Simples</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Gerador de Recibo</title>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
   <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
     body {
-      font-family: Arial, sans-serif;
-      max-width: 700px;
-      margin: 20px auto;
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      min-height: 100vh;
       padding: 20px;
     }
-    label {
-      font-weight: bold;
-      display: block;
-      margin-top: 10px;
+
+    .container {
+      max-width: 800px;
+      margin: 0 auto;
+      background: white;
+      border-radius: 20px;
+      box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
+      overflow: hidden;
     }
-    input, textarea, select {
-      width: 100%;
-      padding: 8px;
-      font-size: 14px;
-      box-sizing: border-box;
-      margin-top: 5px;
-    }
-    .assinatura {
-      margin-top: 40px;
+
+    .header {
+      background: linear-gradient(135deg, #4f46e5 0%, #7c3aed 100%);
+      color: white;
+      padding: 30px;
       text-align: center;
+      position: relative;
     }
-    button {
-      margin-top: 30px;
-      padding: 12px;
+
+    .header::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background: url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 20"><defs><radialGradient id="a" cx="50%" cy="40%" r="50%"><stop offset="0%" stop-color="rgba(255,255,255,.1)"/><stop offset="100%" stop-color="rgba(255,255,255,0)"/></radialGradient></defs><rect width="100" height="20" fill="url(%23a)"/></svg>');
+      opacity: 0.3;
+    }
+
+    .header h1 {
+      font-size: 2.5rem;
+      font-weight: 700;
+      margin-bottom: 10px;
+      position: relative;
+      z-index: 1;
+    }
+
+    .header p {
+      font-size: 1.1rem;
+      opacity: 0.9;
+      position: relative;
+      z-index: 1;
+    }
+
+    .form-container {
+      padding: 40px;
+    }
+
+    .form-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 25px;
+      margin-bottom: 30px;
+    }
+
+    .form-group {
+      display: flex;
+      flex-direction: column;
+    }
+
+    .form-group.full-width {
+      grid-column: 1 / -1;
+    }
+
+    label {
+      font-weight: 600;
+      color: #374151;
+      margin-bottom: 8px;
+      font-size: 0.95rem;
+    }
+
+    input, textarea, select {
+      padding: 12px 16px;
+      border: 2px solid #e5e7eb;
+      border-radius: 12px;
       font-size: 16px;
-      width: 100%;
+      transition: all 0.3s ease;
+      background: #f9fafb;
+    }
+
+    input:focus, textarea:focus, select:focus {
+      outline: none;
+      border-color: #4f46e5;
+      background: white;
+      box-shadow: 0 0 0 3px rgba(79, 70, 229, 0.1);
+      transform: translateY(-1px);
+    }
+
+    textarea {
+      resize: vertical;
+      min-height: 100px;
+    }
+
+    input[readonly] {
+      background: #f3f4f6;
+      color: #6b7280;
+      cursor: not-allowed;
+    }
+
+    .currency-input {
+      position: relative;
+    }
+
+    .currency-input::before {
+      content: 'R$';
+      position: absolute;
+      left: 16px;
+      top: 50%;
+      transform: translateY(-50%);
+      color: #6b7280;
+      font-weight: 600;
+      z-index: 1;
+    }
+
+    .currency-input input {
+      padding-left: 40px;
+    }
+
+    .assinatura {
+      margin: 40px 0;
+      text-align: center;
+      padding: 30px;
+      background: #f8fafc;
+      border-radius: 16px;
+      border: 2px dashed #d1d5db;
+    }
+
+    .assinatura p {
+      margin: 10px 0;
+      color: #6b7280;
+    }
+
+    .assinatura p:first-child {
+      font-size: 1.5rem;
+      color: #374151;
+      margin-bottom: 5px;
+    }
+
+    .btn-container {
+      text-align: center;
+      margin-top: 40px;
+    }
+
+    .btn-gerar {
+      background: linear-gradient(135deg, #4f46e5 0%, #7c3aed 100%);
+      color: white;
+      border: none;
+      padding: 16px 40px;
+      font-size: 18px;
+      font-weight: 600;
+      border-radius: 12px;
       cursor: pointer;
+      transition: all 0.3s ease;
+      box-shadow: 0 4px 15px rgba(79, 70, 229, 0.3);
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+
+    .btn-gerar:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 8px 25px rgba(79, 70, 229, 0.4);
+    }
+
+    .btn-gerar:active {
+      transform: translateY(0);
+    }
+
+    .alert {
+      padding: 12px 16px;
+      border-radius: 8px;
+      margin-bottom: 20px;
+      display: none;
+    }
+
+    .alert.error {
+      background: #fef2f2;
+      border: 1px solid #fecaca;
+      color: #dc2626;
+    }
+
+    .alert.success {
+      background: #f0fdf4;
+      border: 1px solid #bbf7d0;
+      color: #16a34a;
+    }
+
+    @media (max-width: 768px) {
+      .form-grid {
+        grid-template-columns: 1fr;
+        gap: 20px;
+      }
+      
+      .form-container {
+        padding: 20px;
+      }
+      
+      .header {
+        padding: 20px;
+      }
+      
+      .header h1 {
+        font-size: 2rem;
+      }
+      
+      body {
+        padding: 10px;
+      }
+    }
+
+    @media (max-width: 480px) {
+      .header h1 {
+        font-size: 1.5rem;
+      }
+      
+      .btn-gerar {
+        width: 100%;
+        padding: 18px;
+      }
+    }
+
+    /* Animações sutis */
+    .form-group {
+      animation: fadeInUp 0.6s ease forwards;
+      opacity: 0;
+      transform: translateY(20px);
+    }
+
+    .form-group:nth-child(1) { animation-delay: 0.1s; }
+    .form-group:nth-child(2) { animation-delay: 0.2s; }
+    .form-group:nth-child(3) { animation-delay: 0.3s; }
+    .form-group:nth-child(4) { animation-delay: 0.4s; }
+    .form-group:nth-child(5) { animation-delay: 0.5s; }
+    .form-group:nth-child(6) { animation-delay: 0.6s; }
+
+    @keyframes fadeInUp {
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+
+    .loading {
+      display: none;
+      text-align: center;
+      margin-top: 20px;
+    }
+
+    .spinner {
+      border: 3px solid #f3f3f3;
+      border-top: 3px solid #4f46e5;
+      border-radius: 50%;
+      width: 30px;
+      height: 30px;
+      animation: spin 1s linear infinite;
+      margin: 0 auto;
+    }
+
+    @keyframes spin {
+      0% { transform: rotate(0deg); }
+      100% { transform: rotate(360deg); }
     }
   </style>
 </head>
 <body>
-  <h2 style="text-align:center">RECIBO</h2>
+  <div class="container">
+    <div class="header">
+      <h1>📄 Gerador de Recibo</h1>
+      <p>Crie recibos profissionais de forma rápida e fácil</p>
+    </div>
 
-  <label>Nome de quem pagou:</label>
-  <input type="text" id="nome">
+    <div class="form-container">
+      <div id="alert" class="alert"></div>
+      
+      <div class="form-grid">
+        <div class="form-group">
+          <label for="nome">Nome de quem pagou</label>
+          <input type="text" id="nome" placeholder="Digite o nome completo">
+        </div>
 
-  <label>Tipo de documento de quem pagou:</label>
-  <select id="tipoDocPagador">
-    <option value="cpf">CPF</option>
-    <option value="cnpj">CNPJ</option>
-  </select>
+        <div class="form-group">
+          <label for="tipoDocPagador">Tipo de documento</label>
+          <select id="tipoDocPagador">
+            <option value="cpf">CPF</option>
+            <option value="cnpj">CNPJ</option>
+          </select>
+        </div>
 
-  <label>Número do CPF ou CNPJ (opcional):</label>
-  <input type="text" id="docPagador" placeholder="Apenas números">
+        <div class="form-group">
+          <label for="docPagador">Número do documento (opcional)</label>
+          <input type="text" id="docPagador" placeholder="Apenas números">
+        </div>
 
-  <label>Valor (R$):</label>
-  <input type="text" id="valor" oninput="atualizarExtenso()">
+        <div class="form-group">
+          <label for="valor">Valor</label>
+          <div class="currency-input">
+            <input type="text" id="valor" oninput="atualizarExtenso()" placeholder="0,00">
+          </div>
+        </div>
 
-  <label>Valor por extenso:</label>
-  <input type="text" id="extenso" readonly>
+        <div class="form-group full-width">
+          <label for="extenso">Valor por extenso</label>
+          <input type="text" id="extenso" readonly placeholder="Será preenchido automaticamente">
+        </div>
 
-  <label>Referente a:</label>
-  <textarea id="referente" rows="3"></textarea>
+        <div class="form-group full-width">
+          <label for="referente">Referente a</label>
+          <textarea id="referente" placeholder="Descreva o motivo do pagamento"></textarea>
+        </div>
 
-  <label>Forma de pagamento:</label>
-  <select id="forma">
-    <option value="">Selecione</option>
-    <option>Dinheiro</option>
-    <option>Pix</option>
-    <option>Transferência</option>
-    <option>Cartão de crédito</option>
-    <option>Cartão de débito</option>
-    <option>Cheque</option>
-    <option>Outro</option>
-  </select>
+        <div class="form-group">
+          <label for="forma">Forma de pagamento</label>
+          <select id="forma">
+            <option value="">Selecione uma opção</option>
+            <option>Dinheiro</option>
+            <option>Pix</option>
+            <option>Transferência bancária</option>
+            <option>Cartão de crédito</option>
+            <option>Cartão de débito</option>
+            <option>Cheque</option>
+            <option>Outro</option>
+          </select>
+        </div>
 
-  <label>Cidade:</label>
-  <input type="text" id="cidade">
+        <div class="form-group">
+          <label for="cidade">Cidade</label>
+          <input type="text" id="cidade" placeholder="Digite a cidade">
+        </div>
 
-  <label>Data:</label>
-  <input type="date" id="data">
+        <div class="form-group">
+          <label for="data">Data</label>
+          <input type="date" id="data">
+        </div>
 
-  <label>Nome de quem recebeu:</label>
-  <input type="text" id="recebedor">
+        <div class="form-group">
+          <label for="recebedor">Nome de quem recebeu</label>
+          <input type="text" id="recebedor" placeholder="Digite o nome completo">
+        </div>
 
-  <label>Tipo de documento de quem recebeu:</label>
-  <select id="tipoDocRecebedor">
-    <option value="cpf">CPF</option>
-    <option value="cnpj">CNPJ</option>
-  </select>
+        <div class="form-group">
+          <label for="tipoDocRecebedor">Tipo de documento</label>
+          <select id="tipoDocRecebedor">
+            <option value="cpf">CPF</option>
+            <option value="cnpj">CNPJ</option>
+          </select>
+        </div>
 
-  <label>CPF ou CNPJ de quem recebeu (opcional):</label>
-  <input type="text" id="docRecebedor" placeholder="Somente números">
+        <div class="form-group">
+          <label for="docRecebedor">Documento do recebedor (opcional)</label>
+          <input type="text" id="docRecebedor" placeholder="Apenas números">
+        </div>
+      </div>
 
-  <div class="assinatura">
-    <p>__________________________________________</p>
-    <p>(Assinatura de quem recebeu)</p>
+      <div class="assinatura">
+        <p>__________________________________________</p>
+        <p>(Assinatura de quem recebeu)</p>
+      </div>
+
+      <div class="btn-container">
+        <button class="btn-gerar" onclick="gerarPDF()">
+          🎯 Gerar PDF com 2 vias
+        </button>
+        <div class="loading" id="loading">
+          <div class="spinner"></div>
+          <p>Gerando PDF...</p>
+        </div>
+      </div>
+    </div>
   </div>
 
-  <button onclick="gerarPDF()">Gerar PDF com 2 vias</button>
-
   <script>
+    // Definir data atual como padrão
+    document.getElementById('data').valueAsDate = new Date();
+
+    function showAlert(message, type = 'error') {
+      const alert = document.getElementById('alert');
+      alert.textContent = message;
+      alert.className = `alert ${type}`;
+      alert.style.display = 'block';
+      
+      setTimeout(() => {
+        alert.style.display = 'none';
+      }, 5000);
+    }
+
     function atualizarExtenso() {
       const input = document.getElementById('valor').value.replace(',', '.').replace(/[^0-9.]/g, '');
       const valor = parseFloat(input);
@@ -195,94 +499,142 @@
       };
       return calc(t) === d1 && calc(t + 1) === d2;
     }
-    function gerarPDF() {
-      const nome = document.getElementById('nome').value;
-      const tipoPagador = document.getElementById('tipoDocPagador').value;
-      const docPagador = document.getElementById('docPagador').value;
-      const tipoRecebedor = document.getElementById('tipoDocRecebedor').value;
-      const docRecebedor = document.getElementById('docRecebedor').value;
-      const valor = document.getElementById('valor').value;
-      const extenso = document.getElementById('extenso').value;
-      const referente = document.getElementById('referente').value;
-      const forma = document.getElementById('forma').value;
-      const cidade = document.getElementById('cidade').value;
-      const data = formatarDataBR(document.getElementById('data').value);
-      const recebedor = document.getElementById('recebedor').value;
 
-      if (docPagador) {
-        const validoPagador = tipoPagador === 'cpf' ? validarCPF(docPagador) : validarCNPJ(docPagador);
-        if (!validoPagador) {
-          alert(`O ${tipoPagador.toUpperCase()} do pagador é inválido.`);
-          return;
+    function validarFormulario() {
+      const campos = ['nome', 'valor', 'referente', 'forma', 'cidade', 'data', 'recebedor'];
+      for (let campo of campos) {
+        if (!document.getElementById(campo).value.trim()) {
+          showAlert(`Por favor, preencha o campo: ${document.querySelector(`label[for="${campo}"]`).textContent}`);
+          return false;
         }
       }
-
-      if (docRecebedor) {
-        const validoRecebedor = tipoRecebedor === 'cpf' ? validarCPF(docRecebedor) : validarCNPJ(docRecebedor);
-        if (!validoRecebedor) {
-          alert(`O ${tipoRecebedor.toUpperCase()} do recebedor é inválido.`);
-          return;
-        }
-      }
-
-      const { jsPDF } = window.jspdf;
-      const doc = new jsPDF();
-
-      function recibo(offsetY) {
-        let y = 10 + offsetY;
-        doc.setFontSize(14);
-        doc.setFont(undefined, 'bold');
-        doc.text("RECIBO", 105, y, { align: "center" });
-
-        doc.setFontSize(11);
-        y += 10;
-
-        function linha(rotulo, valor) {
-          if (!valor) return;
-          doc.setFont(undefined, 'bold');
-          doc.text(`${rotulo}:`, 10, y);
-          const largura = doc.getTextWidth(`${rotulo}: `);
-          doc.setFont(undefined, 'normal');
-          doc.text(valor.toString(), 10 + largura, y);
-          y += 7;
-        }
-
-        linha("Recebi de", nome);
-        if (docPagador) linha(tipoPagador.toUpperCase(), docPagador);
-        linha("Valor", `R$ ${valor}`);
-        linha("Valor por extenso", extenso);
-        linha("Referente a", referente);
-        linha("Forma de pagamento", forma);
-        linha("Cidade", cidade);
-        linha("Data", data);
-
-        y += 20;
-        doc.setFont(undefined, 'normal');
-        doc.text("__________________________________________", 105, y, { align: "center" });
-        y += 6;
-        doc.text(recebedor || "Assinatura de quem recebeu", 105, y, { align: "center" });
-
-        if (docRecebedor) {
-          y += 6;
-          doc.setFont(undefined, 'bold');
-          doc.text(`${tipoRecebedor.toUpperCase()} do recebedor:`, 105, y, { align: "center" });
-          y += 6;
-          doc.setFont(undefined, 'normal');
-          doc.text(docRecebedor, 105, y, { align: "center" });
-        }
-      }
-
-      recibo(0);
-
-      doc.setLineWidth(0.1);
-      doc.setDrawColor(120);
-      doc.setLineDashPattern([2, 2], 0);
-      doc.line(10, 145, 200, 145); // linha de corte
-
-      recibo(155);
-
-      doc.save("recibo.pdf");
+      return true;
     }
+
+    function gerarPDF() {
+      if (!validarFormulario()) return;
+
+      const loading = document.getElementById('loading');
+      const button = document.querySelector('.btn-gerar');
+      
+      loading.style.display = 'block';
+      button.disabled = true;
+
+      setTimeout(() => {
+        try {
+          const nome = document.getElementById('nome').value;
+          const tipoPagador = document.getElementById('tipoDocPagador').value;
+          const docPagador = document.getElementById('docPagador').value;
+          const tipoRecebedor = document.getElementById('tipoDocRecebedor').value;
+          const docRecebedor = document.getElementById('docRecebedor').value;
+          const valor = document.getElementById('valor').value;
+          const extenso = document.getElementById('extenso').value;
+          const referente = document.getElementById('referente').value;
+          const forma = document.getElementById('forma').value;
+          const cidade = document.getElementById('cidade').value;
+          const data = formatarDataBR(document.getElementById('data').value);
+          const recebedor = document.getElementById('recebedor').value;
+
+          if (docPagador) {
+            const validoPagador = tipoPagador === 'cpf' ? validarCPF(docPagador) : validarCNPJ(docPagador);
+            if (!validoPagador) {
+              showAlert(`O ${tipoPagador.toUpperCase()} do pagador é inválido.`);
+              return;
+            }
+          }
+
+          if (docRecebedor) {
+            const validoRecebedor = tipoRecebedor === 'cpf' ? validarCPF(docRecebedor) : validarCNPJ(docRecebedor);
+            if (!validoRecebedor) {
+              showAlert(`O ${tipoRecebedor.toUpperCase()} do recebedor é inválido.`);
+              return;
+            }
+          }
+
+          const { jsPDF } = window.jspdf;
+          const doc = new jsPDF();
+
+          function recibo(offsetY) {
+            let y = 10 + offsetY;
+            doc.setFontSize(16);
+            doc.setFont(undefined, 'bold');
+            doc.text("RECIBO", 105, y, { align: "center" });
+
+            doc.setFontSize(11);
+            y += 15;
+
+            function linha(rotulo, valor) {
+              if (!valor) return;
+              doc.setFont(undefined, 'bold');
+              doc.text(`${rotulo}:`, 10, y);
+              const largura = doc.getTextWidth(`${rotulo}: `);
+              doc.setFont(undefined, 'normal');
+              const linhas = doc.splitTextToSize(valor.toString(), 190 - largura);
+              doc.text(linhas, 10 + largura, y);
+              y += linhas.length * 7;
+            }
+
+            linha("Recebi de", nome);
+            if (docPagador) linha(tipoPagador.toUpperCase(), docPagador);
+            linha("Valor", `R$ ${valor}`);
+            linha("Valor por extenso", extenso);
+            linha("Referente a", referente);
+            linha("Forma de pagamento", forma);
+            linha("Cidade", cidade);
+            linha("Data", data);
+
+            y += 20;
+            doc.setFont(undefined, 'normal');
+            doc.text("__________________________________________", 105, y, { align: "center" });
+            y += 6;
+            doc.text(recebedor || "Assinatura de quem recebeu", 105, y, { align: "center" });
+
+            if (docRecebedor) {
+              y += 6;
+              doc.setFont(undefined, 'bold');
+              doc.text(`${tipoRecebedor.toUpperCase()} do recebedor:`, 105, y, { align: "center" });
+              y += 6;
+              doc.setFont(undefined, 'normal');
+              doc.text(docRecebedor, 105, y, { align: "center" });
+            }
+          }
+
+          recibo(0);
+
+          doc.setLineWidth(0.1);
+          doc.setDrawColor(120);
+          doc.setLineDashPattern([2, 2], 0);
+          doc.line(10, 145, 200, 145);
+
+          recibo(155);
+
+          doc.save("recibo.pdf");
+          showAlert("PDF gerado com sucesso!", "success");
+
+        } catch (error) {
+          showAlert("Erro ao gerar PDF. Tente novamente.");
+        } finally {
+          loading.style.display = 'none';
+          button.disabled = false;
+        }
+      }, 1000);
+    }
+
+    // Formatação automática de campos
+    document.getElementById('docPagador').addEventListener('input', function(e) {
+      let value = e.target.value.replace(/\D/g, '');
+      e.target.value = value;
+    });
+
+    document.getElementById('docRecebedor').addEventListener('input', function(e) {
+      let value = e.target.value.replace(/\D/g, '');
+      e.target.value = value;
+    });
+
+    document.getElementById('valor').addEventListener('input', function(e) {
+      let value = e.target.value.replace(/[^\d,]/g, '');
+      e.target.value = value;
+    });
   </script>
 </body>
 </html>
