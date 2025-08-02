@@ -42,14 +42,14 @@
   <label>Nome de quem pagou:</label>
   <input type="text" id="nome">
 
-  <label>Tipo de documento:</label>
-  <select id="tipoDoc" onchange="document.getElementById('doc').value=''">
+  <label>Tipo de documento de quem pagou:</label>
+  <select id="tipoDocPagador">
     <option value="cpf">CPF</option>
     <option value="cnpj">CNPJ</option>
   </select>
 
-  <label id="labelDoc">Número do CPF ou CNPJ:</label>
-  <input type="text" id="doc" placeholder="Apenas números">
+  <label>Número do CPF ou CNPJ (opcional):</label>
+  <input type="text" id="docPagador" placeholder="Apenas números">
 
   <label>Valor (R$):</label>
   <input type="text" id="valor" oninput="atualizarExtenso()">
@@ -81,8 +81,14 @@
   <label>Nome de quem recebeu:</label>
   <input type="text" id="recebedor">
 
-  <label>CPF de quem recebeu (opcional):</label>
-  <input type="text" id="cpfRecebedor" placeholder="Somente números">
+  <label>Tipo de documento de quem recebeu:</label>
+  <select id="tipoDocRecebedor">
+    <option value="cpf">CPF</option>
+    <option value="cnpj">CNPJ</option>
+  </select>
+
+  <label>CPF ou CNPJ de quem recebeu (opcional):</label>
+  <input type="text" id="docRecebedor" placeholder="Somente números">
 
   <div class="assinatura">
     <p>__________________________________________</p>
@@ -179,12 +185,12 @@
       let t = cnpj.length - 2, d = cnpj.substring(t), d1 = parseInt(d.charAt(0)), d2 = parseInt(d.charAt(1));
       const calc = x => {
         let n = cnpj.substring(0, x);
-        let y = x - 7, s = 0, r = 0;
+        let y = x - 7, s = 0;
         for (let i = x; i >= 1; i--) {
           s += n.charAt(x - i) * y--;
           if (y < 2) y = 9;
         }
-        r = 11 - s % 11;
+        const r = 11 - s % 11;
         return r > 9 ? 0 : r;
       };
       return calc(t) === d1 && calc(t + 1) === d2;
@@ -192,21 +198,32 @@
 
     function gerarPDF() {
       const nome = document.getElementById('nome').value;
-      const tipo = document.getElementById('tipoDoc').value;
-      const docNum = document.getElementById('doc').value;
+      const tipoPagador = document.getElementById('tipoDocPagador').value;
+      const docPagador = document.getElementById('docPagador').value;
+      const tipoRecebedor = document.getElementById('tipoDocRecebedor').value;
+      const docRecebedor = document.getElementById('docRecebedor').value;
       const valor = document.getElementById('valor').value;
       const extenso = document.getElementById('extenso').value;
       const referente = document.getElementById('referente').value;
       const forma = document.getElementById('forma').value;
       const cidade = document.getElementById('cidade').value;
       const data = formatarDataBR(document.getElementById('data').value);
-      const assinatura = document.getElementById('recebedor').value;
-      const cpfRecebedor = document.getElementById('cpfRecebedor').value;
+      const recebedor = document.getElementById('recebedor').value;
 
-      const docValido = tipo === 'cpf' ? validarCPF(docNum) : validarCNPJ(docNum);
-      if (!docValido) {
-        alert(`O ${tipo.toUpperCase()} informado é inválido.`);
-        return;
+      // Validações opcionais
+      if (docPagador) {
+        const validoPagador = tipoPagador === 'cpf' ? validarCPF(docPagador) : validarCNPJ(docPagador);
+        if (!validoPagador) {
+          alert(`O ${tipoPagador.toUpperCase()} do pagador é inválido.`);
+          return;
+        }
+      }
+      if (docRecebedor) {
+        const validoRecebedor = tipoRecebedor === 'cpf' ? validarCPF(docRecebedor) : validarCNPJ(docRecebedor);
+        if (!validoRecebedor) {
+          alert(`O ${tipoRecebedor.toUpperCase()} do recebedor é inválido.`);
+          return;
+        }
       }
 
       const { jsPDF } = window.jspdf;
@@ -219,31 +236,29 @@
         doc.setFontSize(11);
         y += 10;
         doc.text(`Recebi de: ${nome}`, 10, y); y += 7;
-        doc.text(`${tipo.toUpperCase()}: ${docNum}`, 10, y); y += 7;
+        if (docPagador) {
+          doc.text(`${tipoPagador.toUpperCase()}: ${docPagador}`, 10, y); y += 7;
+        }
         doc.text(`Valor: R$ ${valor}`, 10, y); y += 7;
         doc.text(`Valor por extenso: ${extenso}`, 10, y); y += 7;
         doc.text(`Referente a: ${referente}`, 10, y); y += 7;
         doc.text(`Forma de pagamento: ${forma}`, 10, y); y += 7;
         doc.text(`Cidade: ${cidade}`, 10, y); y += 7;
         doc.text(`Data: ${data}`, 10, y); y += 20;
-        doc.text("__________________________________________", 105, y, { align: "center" });
-        y += 6;
-        doc.text(assinatura || "Assinatura de quem recebeu", 105, y, { align: "center" });
-        if (cpfRecebedor) {
+        doc.text("__________________________________________", 105, y, { align: "center" }); y += 6;
+        doc.text(recebedor || "Assinatura de quem recebeu", 105, y, { align: "center" });
+        if (docRecebedor) {
           y += 6;
-          doc.text(`CPF de quem recebeu: ${cpfRecebedor}`, 105, y, { align: "center" });
+          doc.text(`${tipoRecebedor.toUpperCase()} do recebedor: ${docRecebedor}`, 105, y, { align: "center" });
         }
       }
 
       recibo(0);
-
       doc.setLineWidth(0.1);
       doc.setDrawColor(120);
       doc.setLineDashPattern([2, 2], 0);
-      doc.line(10, 145, 200, 145); // linha de corte
-
+      doc.line(10, 145, 200, 145);
       recibo(155);
-
       doc.save("recibo.pdf");
     }
   </script>
