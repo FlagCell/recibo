@@ -2,45 +2,47 @@
 <html lang="pt-BR">
 <head>
   <meta charset="UTF-8">
-  <title>Recibo Simples</title>
+  <title>Recibo Simples - Duas Vias Sincronizadas</title>
   <style>
     body {
       font-family: Arial, sans-serif;
-      max-width: 700px;
-      margin: 30px auto;
+      margin: 0;
+      padding: 20px;
+    }
+    .recibo {
+      width: 100%;
+      max-width: 800px;
+      margin: 0 auto 40px;
       padding: 20px;
       border: 1px solid #000;
+      box-sizing: border-box;
+      page-break-inside: avoid;
     }
     h2 {
       text-align: center;
+      margin-bottom: 20px;
     }
     label {
       font-weight: bold;
       display: block;
       margin-top: 10px;
     }
-    input, textarea {
+    input, textarea, select {
       width: 100%;
       padding: 8px;
       margin-top: 5px;
-      box-sizing: border-box;
       font-size: 14px;
+      box-sizing: border-box;
     }
     .assinatura {
       margin-top: 40px;
       text-align: center;
     }
-    button {
-      margin-top: 30px;
-      padding: 10px 20px;
-      font-size: 16px;
-      cursor: pointer;
-      display: block;
-      width: 100%;
+    .assinatura p {
+      margin: 5px 0;
     }
     @media print {
-      button { display: none; }
-      input, textarea {
+      input, textarea, select {
         border: none;
         background: transparent;
         resize: none;
@@ -49,34 +51,172 @@
   </style>
 </head>
 <body>
-  <h2>RECIBO</h2>
 
-  <label>Nome de quem pagou:</label>
-  <input type="text" placeholder="Nome completo">
+  <!-- VIA 1 - EDIÇÃO -->
+  <div class="recibo">
+    <h2>RECIBO</h2>
 
-  <label>CPF/CNPJ de quem pagou:</label>
-  <input type="text" placeholder="000.000.000-00">
+    <label>Nome de quem pagou:</label>
+    <input type="text" id="nome">
 
-  <label>Valor (R$):</label>
-  <input type="text" placeholder="Ex: 500,00">
+    <label>CPF/CNPJ de quem pagou:</label>
+    <input type="text" id="cpf">
 
-  <label>Valor por extenso:</label>
-  <input type="text" placeholder="Ex: quinhentos reais">
+    <label>Valor (R$):</label>
+    <input type="text" id="valor" oninput="atualizarValorPorExtenso()">
 
-  <label>Referente a:</label>
-  <textarea rows="3" placeholder="Descreva o serviço ou produto pago"></textarea>
+    <label>Valor por extenso:</label>
+    <input type="text" id="extenso" readonly>
 
-  <label>Forma de pagamento:</label>
-  <input type="text" placeholder="Dinheiro, Pix, transferência...">
+    <label>Referente a:</label>
+    <textarea rows="3" id="referente"></textarea>
 
-  <label>Data:</label>
-  <input type="date">
+    <label>Forma de pagamento:</label>
+    <select id="forma">
+      <option value="">Selecione</option>
+      <option>Dinheiro</option>
+      <option>Pix</option>
+      <option>Transferência</option>
+      <option>Cartão de crédito</option>
+      <option>Cartão de débito</option>
+      <option>Cheque</option>
+      <option>Outro</option>
+    </select>
 
-  <div class="assinatura">
-    <p>__________________________________________</p>
-    <p>Assinatura de quem recebeu</p>
+    <label>Cidade:</label>
+    <input type="text" id="cidade">
+
+    <label>Data:</label>
+    <input type="date" id="data">
+
+    <div class="assinatura">
+      <p>__________________________________________</p>
+      <p>Assinatura de quem recebeu</p>
+    </div>
   </div>
 
-  <button onclick="window.print()">Salvar / Imprimir em PDF</button>
+  <!-- VIA 2 - CÓPIA -->
+  <div class="recibo">
+    <h2>RECIBO</h2>
+
+    <label>Nome de quem pagou:</label>
+    <input type="text" id="nome2" readonly>
+
+    <label>CPF/CNPJ de quem pagou:</label>
+    <input type="text" id="cpf2" readonly>
+
+    <label>Valor (R$):</label>
+    <input type="text" id="valor2" readonly>
+
+    <label>Valor por extenso:</label>
+    <input type="text" id="extenso2" readonly>
+
+    <label>Referente a:</label>
+    <textarea rows="3" id="referente2" readonly></textarea>
+
+    <label>Forma de pagamento:</label>
+    <input type="text" id="forma2" readonly>
+
+    <label>Cidade:</label>
+    <input type="text" id="cidade2" readonly>
+
+    <label>Data:</label>
+    <input type="text" id="data2" readonly>
+
+    <div class="assinatura">
+      <p>__________________________________________</p>
+      <p>Assinatura de quem recebeu</p>
+    </div>
+  </div>
+
+  <script>
+    const campos = ['nome', 'cpf', 'valor', 'extenso', 'referente', 'cidade', 'data'];
+
+    campos.forEach(id => {
+      document.getElementById(id).addEventListener('input', () => {
+        const valor = document.getElementById(id).value;
+        document.getElementById(id + '2').value = valor;
+      });
+    });
+
+    document.getElementById('forma').addEventListener('change', () => {
+      const valor = document.getElementById('forma').value;
+      document.getElementById('forma2').value = valor;
+    });
+
+    function atualizarValorPorExtenso() {
+      const input = document.getElementById('valor');
+      const valor = input.value.replace(',', '.').replace(/[^0-9.]/g, '');
+      const out1 = document.getElementById('extenso');
+      const out2 = document.getElementById('extenso2');
+
+      if (!valor) {
+        out1.value = '';
+        out2.value = '';
+        return;
+      }
+
+      const extenso = numeroParaExtenso(parseFloat(valor));
+      const resultado = extenso.charAt(0).toUpperCase() + extenso.slice(1) + ' reais';
+      out1.value = resultado;
+      out2.value = resultado;
+    }
+
+    function numeroParaExtenso(valor) {
+      const unidades = ['zero', 'um', 'dois', 'três', 'quatro', 'cinco', 'seis', 'sete', 'oito', 'nove'];
+      const dezenas = ['dez', 'onze', 'doze', 'treze', 'quatorze', 'quinze', 'dezesseis', 'dezessete', 'dezoito', 'dezenove'];
+      const dezenas2 = ['', '', 'vinte', 'trinta', 'quarenta', 'cinquenta', 'sessenta', 'setenta', 'oitenta', 'noventa'];
+      const centenas = ['', 'cem', 'cento', 'duzentos', 'trezentos', 'quatrocentos', 'quinhentos', 'seiscentos', 'setecentos', 'oitocentos', 'novecentos'];
+
+      function extenso(n) {
+        if (n === 0) return 'zero';
+        let resultado = '';
+
+        if (n >= 1000) {
+          let milhar = Math.floor(n / 1000);
+          resultado += milhar === 1 ? 'mil' : extenso(milhar) + ' mil';
+          n %= 1000;
+          if (n > 0) resultado += ' e ';
+        }
+
+        if (n >= 100) {
+          if (n === 100) {
+            resultado += 'cem';
+            n = 0;
+          } else {
+            resultado += centenas[Math.floor(n / 100)];
+            n %= 100;
+            if (n > 0) resultado += ' e ';
+          }
+        }
+
+        if (n >= 20) {
+          resultado += dezenas2[Math.floor(n / 10)];
+          n %= 10;
+          if (n > 0) resultado += ' e ';
+        }
+
+        if (n >= 10 && n <= 19) {
+          resultado += dezenas[n - 10];
+          n = 0;
+        }
+
+        if (n > 0 && n < 10) {
+          resultado += unidades[n];
+        }
+
+        return resultado;
+      }
+
+      const inteiro = Math.floor(valor);
+      const centavos = Math.round((valor - inteiro) * 100);
+
+      let texto = extenso(inteiro);
+      if (centavos > 0) {
+        texto += ' e ' + extenso(centavos) + ' centavos';
+      }
+      return texto;
+    }
+  </script>
 </body>
 </html>
