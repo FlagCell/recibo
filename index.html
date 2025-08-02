@@ -27,9 +27,6 @@
       margin-top: 40px;
       text-align: center;
     }
-    .assinatura p {
-      margin: 5px 0;
-    }
     button {
       margin-top: 30px;
       padding: 12px;
@@ -45,8 +42,14 @@
   <label>Nome de quem pagou:</label>
   <input type="text" id="nome">
 
-  <label>CPF/CNPJ de quem pagou:</label>
-  <input type="text" id="cpf">
+  <label>Tipo de documento:</label>
+  <select id="tipoDoc" onchange="document.getElementById('doc').value=''">
+    <option value="cpf">CPF</option>
+    <option value="cnpj">CNPJ</option>
+  </select>
+
+  <label id="labelDoc">Número do CPF ou CNPJ:</label>
+  <input type="text" id="doc" placeholder="Apenas números">
 
   <label>Valor (R$):</label>
   <input type="text" id="valor" oninput="atualizarExtenso()">
@@ -80,7 +83,7 @@
 
   <div class="assinatura">
     <p>__________________________________________</p>
-    <p id="nomeAssinatura">(Assinatura de quem recebeu)</p>
+    <p>(Assinatura de quem recebeu)</p>
   </div>
 
   <button onclick="gerarPDF()">Gerar PDF com 2 vias</button>
@@ -106,14 +109,12 @@
       function extenso(n) {
         if (n === 0) return 'zero';
         let s = '';
-
         if (n >= 1000) {
           const mil = Math.floor(n / 1000);
           s += mil === 1 ? 'mil' : extenso(mil) + ' mil';
           n %= 1000;
           if (n > 0) s += ' e ';
         }
-
         if (n >= 100) {
           const c = Math.floor(n / 100);
           if (c === 1 && n % 100 === 0) {
@@ -125,7 +126,6 @@
             if (n > 0) s += ' e ';
           }
         }
-
         if (n >= 20) {
           s += dezenas[Math.floor(n / 10)];
           n %= 10;
@@ -134,35 +134,76 @@
           s += dezenas10[n - 10];
           n = 0;
         }
-
         if (n > 0 && n < 10) {
           s += unidades[n];
         }
-
         return s;
       }
 
       const inteiro = Math.floor(valor);
       const centavos = Math.round((valor - inteiro) * 100);
-
       let texto = extenso(inteiro) + ' real' + (inteiro !== 1 ? 's' : '');
       if (centavos > 0) {
         texto += ' e ' + extenso(centavos) + ' centavo' + (centavos !== 1 ? 's' : '');
       }
-
       return texto.charAt(0).toUpperCase() + texto.slice(1);
+    }
+
+    function formatarDataBR(dataISO) {
+      if (!dataISO) return '';
+      const [ano, mes, dia] = dataISO.split('-');
+      return `${dia}/${mes}/${ano}`;
+    }
+
+    function validarCPF(cpf) {
+      cpf = cpf.replace(/[^\d]+/g, '');
+      if (cpf.length !== 11 || /^(\d)\1+$/.test(cpf)) return false;
+      let soma = 0;
+      for (let i = 0; i < 9; i++) soma += parseInt(cpf.charAt(i)) * (10 - i);
+      let resto = (soma * 10) % 11;
+      if (resto === 10 || resto === 11) resto = 0;
+      if (resto !== parseInt(cpf.charAt(9))) return false;
+      soma = 0;
+      for (let i = 0; i < 10; i++) soma += parseInt(cpf.charAt(i)) * (11 - i);
+      resto = (soma * 10) % 11;
+      if (resto === 10 || resto === 11) resto = 0;
+      return resto === parseInt(cpf.charAt(10));
+    }
+
+    function validarCNPJ(cnpj) {
+      cnpj = cnpj.replace(/[^\d]+/g, '');
+      if (cnpj.length !== 14 || /^(\d)\1+$/.test(cnpj)) return false;
+      let t = cnpj.length - 2, d = cnpj.substring(t), d1 = parseInt(d.charAt(0)), d2 = parseInt(d.charAt(1));
+      const calc = x => {
+        let n = cnpj.substring(0, x);
+        let y = x - 7, s = 0, r = 0;
+        for (let i = x; i >= 1; i--) {
+          s += n.charAt(x - i) * y--;
+          if (y < 2) y = 9;
+        }
+        r = 11 - s % 11;
+        return r > 9 ? 0 : r;
+      };
+      return calc(t) === d1 && calc(t + 1) === d2;
     }
 
     function gerarPDF() {
       const nome = document.getElementById('nome').value;
-      const cpf = document.getElementById('cpf').value;
+      const tipo = document.getElementById('tipoDoc').value;
+      const docNum = document.getElementById('doc').value;
       const valor = document.getElementById('valor').value;
       const extenso = document.getElementById('extenso').value;
       const referente = document.getElementById('referente').value;
       const forma = document.getElementById('forma').value;
       const cidade = document.getElementById('cidade').value;
-      const data = document.getElementById('data').value;
+      const data = formatarDataBR(document.getElementById('data').value);
       const assinatura = document.getElementById('recebedor').value;
+
+      const docValido = tipo === 'cpf' ? validarCPF(docNum) : validarCNPJ(docNum);
+      if (!docValido) {
+        alert(`O ${tipo.toUpperCase()} informado é inválido.`);
+        return;
+      }
 
       const { jsPDF } = window.jspdf;
       const doc = new jsPDF();
@@ -171,11 +212,10 @@
         let y = 10 + offsetY;
         doc.setFontSize(14);
         doc.text("RECIBO", 105, y, { align: "center" });
-
         doc.setFontSize(11);
         y += 10;
         doc.text(`Recebi de: ${nome}`, 10, y); y += 7;
-        doc.text(`CPF/CNPJ: ${cpf}`, 10, y); y += 7;
+        doc.text(`${tipo.toUpperCase()}: ${docNum}`, 10, y); y += 7;
         doc.text(`Valor: R$ ${valor}`, 10, y); y += 7;
         doc.text(`Valor por extenso: ${extenso}`, 10, y); y += 7;
         doc.text(`Referente a: ${referente}`, 10, y); y += 7;
@@ -187,8 +227,14 @@
         doc.text(assinatura || "Assinatura de quem recebeu", 105, y, { align: "center" });
       }
 
-      recibo(0);      // Primeira via
-      recibo(130);    // Segunda via
+      recibo(0);
+
+      doc.setLineWidth(0.1);
+      doc.setDrawColor(120);
+      doc.setLineDashPattern([2, 2], 0);
+      doc.line(10, 145, 200, 145); // linha de corte ajustada
+
+      recibo(155);
 
       doc.save("recibo.pdf");
     }
